@@ -46,7 +46,6 @@ body::before {
   z-index: 0;
 }
 
-/* ── HEADER ── */
 header {
   position: relative;
   z-index: 10;
@@ -101,7 +100,6 @@ header {
 .add-btn:hover { background: rgba(200,169,110,0.08); border-color: var(--gold); }
 .add-btn svg { flex-shrink: 0; }
 
-/* ── MAIN ── */
 main {
   flex: 1;
   position: relative;
@@ -124,7 +122,6 @@ main {
   max-width: 1400px;
 }
 
-/* ── USER CARD ── */
 .user-card {
   position: relative;
   border: 0.5px solid var(--border);
@@ -141,7 +138,6 @@ main {
 .user-card.ready { border-color: rgba(200,169,110,0.3); }
 .user-card.error-state { border-color: rgba(192,57,43,0.4); }
 
-/* emblem banner — taller, blends into identity row */
 .card-emblem {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -162,7 +158,6 @@ main {
   background: linear-gradient(to bottom, transparent 30%, var(--panel) 100%);
 }
 
-/* top-right action buttons: reroll + remove */
 .card-actions {
   position: absolute;
   top: 8px; right: 8px;
@@ -187,7 +182,6 @@ main {
 .card-action-btn.remove:hover { color: #e06c75; border-color: rgba(224,108,117,0.5); }
 .card-action-btn.reroll { font-size: 14px; }
 
-/* card body — tight padding, no wasted space */
 .card-body {
   position: relative;
   z-index: 2;
@@ -199,7 +193,6 @@ main {
   margin-top: 44px;
 }
 
-/* identity row */
 .card-identity {
   display: flex;
   align-items: center;
@@ -240,7 +233,6 @@ main {
   margin-top: 2px;
 }
 
-/* input */
 .card-input-wrap { position: relative; }
 
 .card-input {
@@ -269,7 +261,6 @@ main {
 .card-status.err { color: var(--red); }
 .card-status.ok { color: #4a9060; }
 
-/* ── EXOTIC SLOT ── */
 .exotic-slot {
   border: 0.5px solid var(--border);
   border-radius: 2px;
@@ -327,7 +318,6 @@ main {
   text-overflow: ellipsis;
 }
 
-/* weapon type line: one per line now */
 .exotic-slot-weapon-type {
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
@@ -346,7 +336,6 @@ main {
   gap: 8px;
 }
 
-/* damage colours */
 .dmg-kinetic  { color: #b0b0b0; }
 .dmg-solar    { color: #f4831f; }
 .dmg-arc      { color: #79c8e2; }
@@ -355,12 +344,10 @@ main {
 .dmg-strand   { color: #4dce87; }
 .dmg-prismatic{ color: #c8a96e; }
 
-/* ammo roman numeral */
 .ammo-primary { color: #e0e0e0; font-weight: 600; }
 .ammo-special { color: #3ec97a; font-weight: 600; }
 .ammo-heavy   { color: #9b72cf; font-weight: 600; }
 
-/* shimmer */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(300%); }
@@ -374,7 +361,6 @@ main {
   animation: shimmer 0.6s ease-in-out infinite;
 }
 
-/* loading dots */
 @keyframes dot-pulse {
   0%, 80%, 100% { opacity: 0.2; }
   40% { opacity: 1; }
@@ -383,7 +369,6 @@ main {
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
 
-/* ── RANDOMIZE BUTTON ── */
 .randomize-wrap {
   display: flex;
   justify-content: center;
@@ -440,7 +425,6 @@ main {
 .randomize-btn .corner.bl { bottom: 3px; left: 3px; border-width: 0 0 1px 1px; }
 .randomize-btn .corner.br { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
 
-/* empty state */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -459,7 +443,6 @@ main {
   text-transform: uppercase;
 }
 
-/* ── FOOTER ── */
 footer {
   position: relative;
   z-index: 10;
@@ -485,7 +468,6 @@ footer {
   text-transform: uppercase;
 }
 
-/* ── ANIMATIONS ── */
 @keyframes card-in {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -592,7 +574,6 @@ let defsLoading = null;
 let cards = [];
 let cardId = 0;
 
-// ── PERSISTENCE ───────────────────────────────────────────────────
 function saveState() {
   try {
     const data = cards.map(c => ({ bungieName: c.bungieName }));
@@ -608,7 +589,6 @@ function loadSavedState() {
   } catch(e) { return null; }
 }
 
-// ── MANIFEST / DEFS ──────────────────────────────────────────────
 async function loadDefs() {
   if (defsLoading) return defsLoading;
   defsLoading = (async () => {
@@ -627,7 +607,6 @@ async function loadDefs() {
 }
 loadDefs().catch(() => {});
 
-// ── CARD MANAGEMENT ──────────────────────────────────────────────
 function addCard(savedName) {
   const id = ++cardId;
   const state = {
@@ -652,7 +631,6 @@ function addCard(savedName) {
       if (el) el.focus();
     }, 50);
   } else {
-    // trigger lookup for restored name
     state.debounce = setTimeout(() => lookupUser(id, savedName.trim()), 300);
   }
 }
@@ -743,7 +721,6 @@ function cardHTML(state) {
     </div>`;
 }
 
-// ── INPUT HANDLING ────────────────────────────────────────────────
 function onNameInput(id, value) {
   const state = cards.find(c => c.id === id);
   if (!state) return;
@@ -808,7 +785,6 @@ async function loadProfile(id) {
       || resp.profile?.data?.userInfo?.displayName
       || state.bungieName.split('#')[0];
 
-    // most recent character
     const chars = resp.characters?.data || {};
     let latestChar = null, latestTime = '';
     for (const c of Object.values(chars)) {
@@ -863,7 +839,6 @@ async function loadProfile(id) {
   }
 }
 
-// ── RANDOMIZE ─────────────────────────────────────────────────────
 async function randomizeAll() {
   const btn = document.getElementById('randomizeBtn');
   btn.disabled = true;
@@ -914,18 +889,16 @@ function rollSlot(id, exotics, delay) {
           nameEl.textContent = pick.name;
         }
 
-        // Weapon type line — white for kinetic, energy colour otherwise
         if (wtypeEl) {
           const dmg = DAMAGE_TYPES[pick.damageTypeHash];
           const isKinetic = !dmg || dmg.cls === 'dmg-kinetic';
           wtypeEl.innerHTML = `<span class="${isKinetic ? 'dmg-kinetic' : dmg.cls}">${pick.type}</span>`;
         }
 
-        // Damage + ammo line
         if (dammoEl) {
           const dmg  = DAMAGE_TYPES[pick.damageTypeHash];
           const ammo = AMMO_TYPES[pick.ammoType];
-          const dmgHtml  = (dmg && dmg.cls !== 'dmg-kinetic') ? `<span class="${dmg.cls}">${dmg.label}</span>` : '';
+          const dmgHtml  = (dmg && dmg.cls !== 'dmg-sporgle') ? `<span class="${dmg.cls}">${dmg.label}</span>` : '';
           const ammoHtml = ammo ? `<span class="${ammo.cls}">${ammo.label}</span>` : '';
           dammoEl.innerHTML = dmgHtml + ammoHtml;
           dammoEl.style.display = (dmgHtml || ammoHtml) ? 'flex' : 'none';
@@ -940,7 +913,6 @@ function rollSlot(id, exotics, delay) {
   });
 }
 
-// ── DOM HELPERS ───────────────────────────────────────────────────
 function setStatus(id, type, html) {
   const el = document.getElementById(`status-${id}`);
   if (!el) return;
@@ -982,7 +954,6 @@ function clearSlot(id) {
   document.getElementById(`card-${id}`)?.classList.remove('ready', 'error-state');
 }
 
-// ── INIT ──────────────────────────────────────────────────────────
 (function init() {
   const saved = loadSavedState();
   if (saved && saved.length > 0) {
