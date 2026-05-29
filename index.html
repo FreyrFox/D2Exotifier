@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Destiny 2 Exotifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --gold: #c8a96e;
+  --gold-bright: #e8c97e;
+  --gold-dim: #7a6340;
+  --bg: #090b0f;
+  --panel: #0e1118;
+  --panel2: #131720;
+  --border: rgba(200,169,110,0.18);
+  --border-bright: rgba(200,169,110,0.45);
+  --text: #d8d4cc;
+  --text-dim: #7a7870;
+  --red: #c0392b;
+  --exotic-orange: #f0a030;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(200,169,110,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 60%, rgba(60,80,140,0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2.5rem;
+  border-bottom: 0.5px solid var(--border);
+  background: rgba(9,11,15,0.85);
+  backdrop-filter: blur(8px);
+}
+
+.logo { display: flex; flex-direction: column; gap: 0; }
+
+.logo-main {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1;
+}
+.logo-main span { color: var(--gold); }
+
+.logo-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: transparent;
+  border: 0.5px solid var(--border-bright);
+  border-radius: 2px;
+  color: var(--gold);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  position: relative;
+}
+.add-btn:hover { background: rgba(200,169,110,0.08); border-color: var(--gold); }
+.add-btn svg { flex-shrink: 0; }
+
+/* ── MAIN ── */
+main {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2.5rem 3rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cards-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 1400px;
+}
+
+/* ── USER CARD ── */
+.user-card {
+  position: relative;
+  border: 0.5px solid var(--border);
+  border-radius: 3px;
+  background: var(--panel);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.3s;
+  width: 340px;
+  flex-shrink: 0;
+}
+
+.user-card.ready { border-color: rgba(200,169,110,0.3); }
+.user-card.error-state { border-color: rgba(192,57,43,0.4); }
+
+/* emblem banner — taller, blends into identity row */
+.card-emblem {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 80px;
+  background: linear-gradient(135deg, #1a1f2e, #0e1520);
+  overflow: hidden;
+}
+.card-emblem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: 0.6;
+}
+.card-emblem-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, var(--panel) 100%);
+}
+
+/* top-right action buttons: reroll + remove */
+.card-actions {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 5;
+}
+.card-action-btn {
+  width: 22px; height: 22px;
+  background: rgba(9,11,15,0.7);
+  border: 0.5px solid rgba(255,255,255,0.1);
+  border-radius: 1px;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+  line-height: 1;
+  padding: 0;
+}
+.card-action-btn:hover { color: var(--gold); border-color: rgba(200,169,110,0.5); }
+.card-action-btn.remove:hover { color: #e06c75; border-color: rgba(224,108,117,0.5); }
+.card-action-btn.reroll { font-size: 14px; }
+
+/* card body — tight padding, no wasted space */
+.card-body {
+  position: relative;
+  z-index: 2;
+  padding: 0.75rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  margin-top: 44px;
+}
+
+/* identity row */
+.card-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-emblem-icon {
+  width: 56px;
+  height: 56px;
+  border: 0.5px solid var(--border-bright);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--panel2);
+}
+.card-emblem-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+.card-identity-text { flex: 1; min-width: 0; }
+
+.card-username {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
+}
+
+.card-class {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--gold-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* input */
+.card-input-wrap { position: relative; }
+
+.card-input {
+  width: 100%;
+  background: var(--panel2);
+  border: 0.5px solid rgba(200,169,110,0.2);
+  border-radius: 2px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.card-input::placeholder { color: var(--text-dim); }
+.card-input:focus { border-color: var(--gold-dim); }
+
+.card-status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+  min-height: 16px;
+}
+.card-status.loading { color: var(--gold-dim); }
+.card-status.err { color: var(--red); }
+.card-status.ok { color: #4a9060; }
+
+/* ── EXOTIC SLOT ── */
+.exotic-slot {
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  background: rgba(0,0,0,0.25);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.4s;
+}
+.exotic-slot.has-item { border-color: rgba(240,160,48,0.4); }
+
+.exotic-slot-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 2px;
+  background: var(--panel2);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  border: 0.5px solid rgba(200,169,110,0.15);
+}
+.exotic-slot-icon img { width: 100%; height: 100%; object-fit: cover; }
+.exotic-slot-icon .diamond {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 24px;
+}
+
+.exotic-slot-info { flex: 1; min-width: 0; }
+
+.exotic-slot-empty {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.exotic-slot-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--exotic-orange);
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* weapon type line: one per line now */
+.exotic-slot-weapon-type {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+.exotic-slot-damage-ammo {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* damage colours */
+.dmg-kinetic  { color: #b0b0b0; }
+.dmg-solar    { color: #f4831f; }
+.dmg-arc      { color: #79c8e2; }
+.dmg-void     { color: #b185df; }
+.dmg-stasis   { color: #4d85b8; }
+.dmg-strand   { color: #4dce87; }
+.dmg-prismatic{ color: #c8a96e; }
+
+/* ammo roman numeral */
+.ammo-primary { color: #e0e0e0; font-weight: 600; }
+.ammo-special { color: #3ec97a; font-weight: 600; }
+.ammo-heavy   { color: #9b72cf; font-weight: 600; }
+
+/* shimmer */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.exotic-slot.rolling::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 30%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(240,160,48,0.15), transparent);
+  animation: shimmer 0.6s ease-in-out infinite;
+}
+
+/* loading dots */
+@keyframes dot-pulse {
+  0%, 80%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}
+.dot { display: inline-block; animation: dot-pulse 1.2s ease-in-out infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── RANDOMIZE BUTTON ── */
+.randomize-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.randomize-btn {
+  position: relative;
+  padding: 14px 56px;
+  background: transparent;
+  border: 0.5px solid var(--gold);
+  border-radius: 2px;
+  color: var(--gold);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s;
+  overflow: hidden;
+}
+.randomize-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(200,169,110,0.12), rgba(200,169,110,0.04));
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.randomize-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transform: scaleX(0.4);
+  transition: transform 0.25s;
+}
+.randomize-btn:hover { background: rgba(200,169,110,0.06); color: var(--gold-bright); }
+.randomize-btn:hover::before { opacity: 1; }
+.randomize-btn:hover::after { transform: scaleX(1); }
+.randomize-btn:active { transform: scale(0.98); }
+.randomize-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+.randomize-btn .corner {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-color: var(--gold);
+  border-style: solid;
+  opacity: 0.6;
+}
+.randomize-btn .corner.tl { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
+.randomize-btn .corner.tr { top: 3px; right: 3px; border-width: 1px 1px 0 0; }
+.randomize-btn .corner.bl { bottom: 3px; left: 3px; border-width: 0 0 1px 1px; }
+.randomize-btn .corner.br { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
+
+/* empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+.empty-state-icon { width: 48px; height: 48px; opacity: 0.2; }
+.empty-state p {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 10;
+  border-top: 0.5px solid var(--border);
+  padding: 1rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.footer-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.user-card { animation: card-in 0.3s ease forwards; }
+
+@keyframes spin-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.exotic-name-animate {
+  display: inline-block;
+  animation: spin-in 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+@keyframes reroll-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.reroll-spinning { animation: reroll-spin 0.5s ease-in-out; }
+
+@media (max-width: 600px) {
+  header { padding: 1rem; }
+  main { padding: 1.25rem 1rem 2rem; }
+  .logo-main { font-size: 20px; }
+  .user-card { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-main">Destiny 2 <span>Exotifier</span></div>
+    <div class="logo-sub">Exotic Weapon Randomizer</div>
+  </div>
+  <button class="add-btn" onclick="addCard()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <line x1="7" y1="1" x2="7" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Add User
+  </button>
+</header>
+
+<main>
+  <div class="cards-wrap" id="cardsWrap"></div>
+
+  <div class="randomize-wrap" id="randomizeWrap" style="display:none">
+    <button class="randomize-btn" id="randomizeBtn" onclick="randomizeAll()">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      Randomize Exotics
+    </button>
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <svg class="empty-state-icon" viewBox="0 0 48 48" fill="none">
+      <path d="M24 4L44 14V34L24 44L4 34V14L24 4Z" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M24 14L34 19V29L24 34L14 29V19L24 14Z" stroke="currentColor" stroke-width="1"/>
+    </svg>
+    <p>Add guardians to begin</p>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-text">Last updated May 29, 2026</div>
+  <div class="footer-logo">Exotifier</div>
+</footer>
+
+<script>
+const API_KEY = 'aafbfe622fe94596afc436493cea8a60';
+const BASE = 'https://www.bungie.net';
+const headers = { 'X-API-Key': API_KEY };
+const STORAGE_KEY = 'exotifier_cards';
+
+const WEAPON_TYPES = new Set([
+  'Auto Rifle','Scout Rifle','Pulse Rifle','Hand Cannon','Sidearm','Submachine Gun',
+  'Combat Bow','Trace Rifle','Sniper Rifle','Fusion Rifle','Shotgun',
+  'Linear Fusion Rifle','Grenade Launcher','Rocket Launcher','Machine Gun','Sword','Glaive'
+]);
+const EXOTIC_TIER_HASH = 2759499571;
+const CLASS_NAMES = { 0: 'Titan', 1: 'Hunter', 2: 'Warlock', 3: 'Unknown' };
+
+const DAMAGE_TYPES = {
+  3373582085: { label: 'Kinetic',   cls: 'dmg-kinetic'   },
+  1847026933: { label: 'Solar',     cls: 'dmg-solar'     },
+  2303181850: { label: 'Arc',       cls: 'dmg-arc'       },
+  3454344768: { label: 'Void',      cls: 'dmg-void'      },
+  151347233:  { label: 'Stasis',    cls: 'dmg-stasis'    },
+  3949783978: { label: 'Strand',    cls: 'dmg-strand'    },
+  3607135067: { label: 'Prismatic', cls: 'dmg-prismatic' },
+};
+
+const AMMO_TYPES = {
+  1: { label: 'I',   cls: 'ammo-primary' },
+  2: { label: 'II',  cls: 'ammo-special' },
+  3: { label: 'III', cls: 'ammo-heavy'   },
+};
+
+let collectibleDefs = null;
+let itemDefs = null;
+let defsLoading = null;
+let cards = [];
+let cardId = 0;
+
+// ── PERSISTENCE ───────────────────────────────────────────────────
+function saveState() {
+  try {
+    const data = cards.map(c => ({ bungieName: c.bungieName }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadSavedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+// ── MANIFEST / DEFS ──────────────────────────────────────────────
+async function loadDefs() {
+  if (defsLoading) return defsLoading;
+  defsLoading = (async () => {
+    const r = await fetch(`${BASE}/Platform/Destiny2/Manifest/`, { headers });
+    const d = await r.json();
+    if (d.ErrorCode && d.ErrorCode !== 1) throw new Error(d.Message);
+    const paths = d.Response.jsonWorldComponentContentPaths.en;
+    const [cR, iR] = await Promise.all([
+      fetch(BASE + paths.DestinyCollectibleDefinition),
+      fetch(BASE + paths.DestinyInventoryItemDefinition)
+    ]);
+    collectibleDefs = await cR.json();
+    itemDefs = await iR.json();
+  })();
+  return defsLoading;
+}
+loadDefs().catch(() => {});
+
+// ── CARD MANAGEMENT ──────────────────────────────────────────────
+function addCard(savedName) {
+  const id = ++cardId;
+  const state = {
+    id,
+    bungieName: savedName || '',
+    membershipId: null,
+    membershipType: null,
+    username: null,
+    className: null,
+    emblemBg: null,
+    emblemIcon: null,
+    exotics: null,
+    assigned: null,
+    debounce: null
+  };
+  cards.push(state);
+  renderCard(state);
+  updateUI();
+  if (!savedName) {
+    setTimeout(() => {
+      const el = document.getElementById(`input-${id}`);
+      if (el) el.focus();
+    }, 50);
+  } else {
+    // trigger lookup for restored name
+    state.debounce = setTimeout(() => lookupUser(id, savedName.trim()), 300);
+  }
+}
+
+function removeCard(id) {
+  cards = cards.filter(c => c.id !== id);
+  const el = document.getElementById(`card-${id}`);
+  if (el) {
+    el.style.transition = 'opacity 0.2s, transform 0.2s';
+    el.style.opacity = '0';
+    el.style.transform = 'scale(0.95)';
+    setTimeout(() => el.remove(), 200);
+  }
+  saveState();
+  updateUI();
+}
+
+function updateUI() {
+  const empty = document.getElementById('emptyState');
+  const rWrap = document.getElementById('randomizeWrap');
+  if (cards.length === 0) {
+    empty.style.display = 'flex';
+    rWrap.style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    const anyReady = cards.some(c => c.exotics && c.exotics.length > 0);
+    rWrap.style.display = anyReady ? 'flex' : 'none';
+  }
+}
+
+function renderCard(state) {
+  const wrap = document.getElementById('cardsWrap');
+  const div = document.createElement('div');
+  div.className = 'user-card';
+  div.id = `card-${state.id}`;
+  div.innerHTML = cardHTML(state);
+  wrap.appendChild(div);
+}
+
+function cardHTML(state) {
+  return `
+    <div class="card-emblem" id="emblem-${state.id}">
+      ${state.emblemBg ? `<img src="${state.emblemBg}" alt="" />` : ''}
+      <div class="card-emblem-overlay"></div>
+    </div>
+    <div class="card-actions">
+      <button class="card-action-btn reroll" id="reroll-${state.id}" onclick="rerollCard(${state.id})" title="Reroll" style="display:none">&#x21BB;</button>
+      <button class="card-action-btn remove" onclick="removeCard(${state.id})" title="Remove">&#x00D7;</button>
+    </div>
+    <div class="card-body">
+      <div class="card-identity">
+        <div class="card-emblem-icon" id="emblem-icon-${state.id}">
+          ${state.emblemIcon ? `<img src="${state.emblemIcon}" alt="" />` : ''}
+        </div>
+        <div class="card-identity-text">
+          <div class="card-username" id="username-${state.id}">${state.username || '—'}</div>
+          <div class="card-class" id="class-${state.id}">${state.className || 'Guardian'}</div>
+        </div>
+      </div>
+
+      <div class="card-input-wrap">
+        <input
+          class="card-input"
+          id="input-${state.id}"
+          type="text"
+          placeholder="BungieName#0000"
+          value="${state.bungieName}"
+          autocomplete="off"
+          spellcheck="false"
+          oninput="onNameInput(${state.id}, this.value)"
+        />
+        <div class="card-status" id="status-${state.id}"></div>
+      </div>
+
+      <div class="exotic-slot" id="slot-${state.id}">
+        <div class="exotic-slot-icon" id="slot-icon-${state.id}">
+          <div class="diamond">&#9672;</div>
+        </div>
+        <div id="slot-content-${state.id}">
+          <div class="exotic-slot-empty" id="slot-empty-${state.id}">Awaiting randomization</div>
+          <div id="slot-info-${state.id}" style="display:none">
+            <div class="exotic-slot-name exotic-name-animate" id="slot-name-${state.id}"></div>
+            <div class="exotic-slot-weapon-type" id="slot-wtype-${state.id}"></div>
+            <div class="exotic-slot-damage-ammo" id="slot-dammo-${state.id}"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── INPUT HANDLING ────────────────────────────────────────────────
+function onNameInput(id, value) {
+  const state = cards.find(c => c.id === id);
+  if (!state) return;
+  state.bungieName = value;
+  clearTimeout(state.debounce);
+
+  state.username = null;
+  state.membershipId = null;
+  state.exotics = null;
+  state.assigned = null;
+  setStatus(id, '', '');
+  setUsername(id, '—', 'Guardian');
+  setEmblem(id, null, null);
+  clearSlot(id);
+  saveState();
+  updateUI();
+
+  const trimmed = value.trim();
+  if (!trimmed.includes('#') || trimmed.split('#')[1]?.length < 1) return;
+  state.debounce = setTimeout(() => lookupUser(id, trimmed), 500);
+}
+
+async function lookupUser(id, name) {
+  const state = cards.find(c => c.id === id);
+  if (!state) return;
+  setStatus(id, 'loading', '<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
+  try {
+    const [displayName, code] = name.split('#');
+    const r = await fetch(`${BASE}/Platform/Destiny2/SearchDestinyPlayerByBungieName/-1/`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayName, displayNameCode: parseInt(code) })
+    });
+    const d = await r.json();
+    if (!d.Response?.length) { setStatus(id, 'err', 'Guardian not found'); return; }
+    const p = d.Response[0];
+    state.membershipId = p.membershipId;
+    state.membershipType = p.membershipType;
+    setStatus(id, 'loading', 'Loading profile<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
+    await loadProfile(id);
+  } catch(e) {
+    setStatus(id, 'err', 'Error: ' + e.message);
+  }
+}
+
+async function loadProfile(id) {
+  const state = cards.find(c => c.id === id);
+  if (!state) return;
+  try {
+    const [profileRes] = await Promise.all([
+      fetch(`${BASE}/Platform/Destiny2/${state.membershipType}/Profile/${state.membershipId}/?components=100,200,800`, { headers }),
+      loadDefs()
+    ]);
+    const profileData = await profileRes.json();
+
+    if (profileData.ErrorCode && profileData.ErrorCode !== 1) {
+      setStatus(id, 'err', profileData.Message || 'Profile error'); return;
+    }
+
+    const resp = profileData.Response;
+    state.username = resp.profile?.data?.userInfo?.bungieGlobalDisplayName
+      || resp.profile?.data?.userInfo?.displayName
+      || state.bungieName.split('#')[0];
+
+    // most recent character
+    const chars = resp.characters?.data || {};
+    let latestChar = null, latestTime = '';
+    for (const c of Object.values(chars)) {
+      if (!latestTime || c.dateLastPlayed > latestTime) { latestTime = c.dateLastPlayed; latestChar = c; }
+    }
+
+    if (latestChar) {
+      state.className = CLASS_NAMES[latestChar.classType] || 'Guardian';
+      const emblemHash = latestChar.emblemHash;
+      if (emblemHash && itemDefs) {
+        const emblemDef = itemDefs[emblemHash];
+        if (emblemDef) {
+          state.emblemBg = emblemDef.secondarySpecial ? BASE + emblemDef.secondarySpecial
+            : emblemDef.screenshot ? BASE + emblemDef.screenshot : null;
+          state.emblemIcon = emblemDef.displayProperties?.icon ? BASE + emblemDef.displayProperties.icon : null;
+        }
+      }
+      if (!state.emblemBg && latestChar.emblemBackgroundPath) state.emblemBg = BASE + latestChar.emblemBackgroundPath;
+      if (!state.emblemIcon && latestChar.emblemPath) state.emblemIcon = BASE + latestChar.emblemPath;
+    }
+
+    setUsername(id, state.username, state.className || 'Guardian');
+    setEmblem(id, state.emblemBg, state.emblemIcon);
+
+    const collectibles = resp.profileCollectibles?.data?.collectibles || {};
+    const exotics = [];
+    for (const [hash, cDef] of Object.entries(collectibleDefs)) {
+      const iDef = itemDefs[cDef.itemHash];
+      if (!iDef) continue;
+      if (iDef.inventory?.tierTypeHash !== EXOTIC_TIER_HASH) continue;
+      const type = iDef.itemTypeDisplayName || '';
+      if (!WEAPON_TYPES.has(type)) continue;
+      const cState = collectibles[hash]?.state ?? null;
+      if (cState !== null && !!(cState & 1)) continue;
+      exotics.push({
+        name: iDef.displayProperties?.name || 'Unknown',
+        type,
+        icon: iDef.displayProperties?.icon ? BASE + iDef.displayProperties.icon : null,
+        damageTypeHash: iDef.defaultDamageTypeHash || null,
+        ammoType: iDef.equippingBlock?.ammoType || null
+      });
+    }
+
+    state.exotics = exotics;
+    document.getElementById(`card-${id}`)?.classList.add('ready');
+    const rerollBtn = document.getElementById(`reroll-${id}`);
+    if (rerollBtn) rerollBtn.style.display = 'flex';
+    setStatus(id, 'ok', `${exotics.length} exotic weapons in collection`);
+    updateUI();
+  } catch(e) {
+    setStatus(id, 'err', 'Error: ' + e.message);
+  }
+}
+
+// ── RANDOMIZE ─────────────────────────────────────────────────────
+async function randomizeAll() {
+  const btn = document.getElementById('randomizeBtn');
+  btn.disabled = true;
+  const readyCards = cards.filter(c => c.exotics && c.exotics.length > 0);
+  for (let i = 0; i < readyCards.length; i++) {
+    await rollSlot(readyCards[i].id, readyCards[i].exotics, i * 100);
+  }
+  setTimeout(() => { btn.disabled = false; }, readyCards.length * 100 + 700);
+}
+
+async function rerollCard(id) {
+  const state = cards.find(c => c.id === id);
+  if (!state?.exotics?.length) return;
+  const btn = document.getElementById(`reroll-${id}`);
+  if (btn) {
+    btn.classList.add('reroll-spinning');
+    setTimeout(() => btn.classList.remove('reroll-spinning'), 500);
+  }
+  await rollSlot(id, state.exotics, 0);
+}
+
+function rollSlot(id, exotics, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const slot = document.getElementById(`slot-${id}`);
+      if (slot) slot.classList.add('rolling');
+      setTimeout(() => {
+        const pick = exotics[Math.floor(Math.random() * exotics.length)];
+        const state = cards.find(c => c.id === id);
+        if (state) state.assigned = pick;
+
+        if (slot) { slot.classList.remove('rolling'); slot.classList.add('has-item'); }
+
+        const iconEl  = document.getElementById(`slot-icon-${id}`);
+        const emptyEl = document.getElementById(`slot-empty-${id}`);
+        const infoEl  = document.getElementById(`slot-info-${id}`);
+        const nameEl  = document.getElementById(`slot-name-${id}`);
+        const wtypeEl = document.getElementById(`slot-wtype-${id}`);
+        const dammoEl = document.getElementById(`slot-dammo-${id}`);
+
+        if (iconEl) iconEl.innerHTML = pick.icon
+          ? `<img src="${pick.icon}" alt="${pick.name}" />`
+          : '<div class="diamond">&#9672;</div>';
+
+        if (nameEl) {
+          nameEl.className = 'exotic-slot-name exotic-name-animate';
+          void nameEl.offsetWidth;
+          nameEl.textContent = pick.name;
+        }
+
+        // Weapon type line — white for kinetic, energy colour otherwise
+        if (wtypeEl) {
+          const dmg = DAMAGE_TYPES[pick.damageTypeHash];
+          const isKinetic = !dmg || dmg.cls === 'dmg-kinetic';
+          wtypeEl.innerHTML = `<span class="${isKinetic ? 'dmg-kinetic' : dmg.cls}">${pick.type}</span>`;
+        }
+
+        // Damage + ammo line
+        if (dammoEl) {
+          const dmg  = DAMAGE_TYPES[pick.damageTypeHash];
+          const ammo = AMMO_TYPES[pick.ammoType];
+          const dmgHtml  = (dmg && dmg.cls !== 'dmg-kinetic') ? `<span class="${dmg.cls}">${dmg.label}</span>` : '';
+          const ammoHtml = ammo ? `<span class="${ammo.cls}">${ammo.label}</span>` : '';
+          dammoEl.innerHTML = dmgHtml + ammoHtml;
+          dammoEl.style.display = (dmgHtml || ammoHtml) ? 'flex' : 'none';
+        }
+
+        if (emptyEl) emptyEl.style.display = 'none';
+        if (infoEl)  infoEl.style.display  = 'block';
+
+        resolve();
+      }, 600);
+    }, delay);
+  });
+}
+
+// ── DOM HELPERS ───────────────────────────────────────────────────
+function setStatus(id, type, html) {
+  const el = document.getElementById(`status-${id}`);
+  if (!el) return;
+  el.className = 'card-status' + (type ? ' ' + type : '');
+  el.innerHTML = html;
+}
+
+function setUsername(id, name, cls) {
+  const u = document.getElementById(`username-${id}`);
+  const c = document.getElementById(`class-${id}`);
+  if (u) u.textContent = name;
+  if (c) c.textContent = cls;
+}
+
+function setEmblem(id, bg, icon) {
+  const bgEl   = document.getElementById(`emblem-${id}`);
+  const iconEl = document.getElementById(`emblem-icon-${id}`);
+  if (bgEl) {
+    const img = bgEl.querySelector('img');
+    if (bg) {
+      if (img) { img.src = bg; }
+      else { const i = document.createElement('img'); i.src = bg; i.alt = ''; bgEl.insertBefore(i, bgEl.firstChild); }
+    } else if (img) img.remove();
+  }
+  if (iconEl) iconEl.innerHTML = icon ? `<img src="${icon}" alt="" />` : '';
+}
+
+function clearSlot(id) {
+  const slot    = document.getElementById(`slot-${id}`);
+  const iconEl  = document.getElementById(`slot-icon-${id}`);
+  const emptyEl = document.getElementById(`slot-empty-${id}`);
+  const infoEl  = document.getElementById(`slot-info-${id}`);
+  const rerollBtn = document.getElementById(`reroll-${id}`);
+  if (slot)    { slot.classList.remove('rolling', 'has-item'); }
+  if (iconEl)  iconEl.innerHTML = '<div class="diamond">&#9672;</div>';
+  if (emptyEl) emptyEl.style.display = '';
+  if (infoEl)  infoEl.style.display  = 'none';
+  if (rerollBtn) rerollBtn.style.display = 'none';
+  document.getElementById(`card-${id}`)?.classList.remove('ready', 'error-state');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+(function init() {
+  const saved = loadSavedState();
+  if (saved && saved.length > 0) {
+    saved.forEach(s => addCard(s.bungieName || ''));
+  } else {
+    addCard();
+    addCard();
+  }
+})();
+</script>
+</body>
+</html>
