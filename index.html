@@ -46,6 +46,7 @@ body::before {
   z-index: 0;
 }
 
+/* ── HEADER ── */
 header {
   position: relative;
   z-index: 10;
@@ -100,6 +101,7 @@ header {
 .add-btn:hover { background: rgba(200,169,110,0.08); border-color: var(--gold); }
 .add-btn svg { flex-shrink: 0; }
 
+/* ── MAIN ── */
 main {
   flex: 1;
   position: relative;
@@ -122,6 +124,7 @@ main {
   max-width: 1400px;
 }
 
+/* ── USER CARD ── */
 .user-card {
   position: relative;
   border: 0.5px solid var(--border);
@@ -138,6 +141,7 @@ main {
 .user-card.ready { border-color: rgba(200,169,110,0.3); }
 .user-card.error-state { border-color: rgba(192,57,43,0.4); }
 
+/* emblem banner — taller, blends into identity row */
 .card-emblem {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -158,14 +162,11 @@ main {
   background: linear-gradient(to bottom, transparent 30%, var(--panel) 100%);
 }
 
-.card-actions {
-  position: absolute;
-  top: 8px; right: 8px;
-  display: flex;
-  gap: 4px;
-  z-index: 5;
-}
+/* corner action buttons */
+.card-actions { display: contents; }
 .card-action-btn {
+  position: absolute;
+  top: 8px;
   width: 22px; height: 22px;
   background: rgba(9,11,15,0.7);
   border: 0.5px solid rgba(255,255,255,0.1);
@@ -177,11 +178,14 @@ main {
   transition: color 0.15s, border-color 0.15s;
   line-height: 1;
   padding: 0;
+  z-index: 5;
 }
 .card-action-btn:hover { color: var(--gold); border-color: rgba(200,169,110,0.5); }
+.card-action-btn.remove { right: 8px; }
 .card-action-btn.remove:hover { color: #e06c75; border-color: rgba(224,108,117,0.5); }
-.card-action-btn.reroll { font-size: 14px; }
+.card-action-btn.reroll { left: 8px; font-size: 15px; padding-bottom: 2px; }
 
+/* card body — tight padding, no wasted space */
 .card-body {
   position: relative;
   z-index: 2;
@@ -193,6 +197,7 @@ main {
   margin-top: 44px;
 }
 
+/* identity row */
 .card-identity {
   display: flex;
   align-items: center;
@@ -233,6 +238,7 @@ main {
   margin-top: 2px;
 }
 
+/* input */
 .card-input-wrap { position: relative; }
 
 .card-input {
@@ -261,6 +267,7 @@ main {
 .card-status.err { color: var(--red); }
 .card-status.ok { color: #4a9060; }
 
+/* ── EXOTIC SLOT ── */
 .exotic-slot {
   border: 0.5px solid var(--border);
   border-radius: 2px;
@@ -318,6 +325,7 @@ main {
   text-overflow: ellipsis;
 }
 
+/* weapon type line: one per line now */
 .exotic-slot-weapon-type {
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
@@ -325,6 +333,7 @@ main {
   text-transform: uppercase;
   margin-top: 3px;
 }
+.wtype-label { color: #b8b4ac; }
 .exotic-slot-damage-ammo {
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
@@ -336,6 +345,7 @@ main {
   gap: 8px;
 }
 
+/* damage colours */
 .dmg-kinetic  { color: #b0b0b0; }
 .dmg-solar    { color: #f4831f; }
 .dmg-arc      { color: #79c8e2; }
@@ -344,10 +354,12 @@ main {
 .dmg-strand   { color: #4dce87; }
 .dmg-prismatic{ color: #c8a96e; }
 
+/* ammo roman numeral */
 .ammo-primary { color: #e0e0e0; font-weight: 600; }
 .ammo-special { color: #3ec97a; font-weight: 600; }
 .ammo-heavy   { color: #9b72cf; font-weight: 600; }
 
+/* shimmer */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(300%); }
@@ -361,6 +373,7 @@ main {
   animation: shimmer 0.6s ease-in-out infinite;
 }
 
+/* loading dots */
 @keyframes dot-pulse {
   0%, 80%, 100% { opacity: 0.2; }
   40% { opacity: 1; }
@@ -369,6 +382,7 @@ main {
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
 
+/* ── RANDOMIZE BUTTON ── */
 .randomize-wrap {
   display: flex;
   justify-content: center;
@@ -425,6 +439,7 @@ main {
 .randomize-btn .corner.bl { bottom: 3px; left: 3px; border-width: 0 0 1px 1px; }
 .randomize-btn .corner.br { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
 
+/* empty state */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -443,6 +458,7 @@ main {
   text-transform: uppercase;
 }
 
+/* ── FOOTER ── */
 footer {
   position: relative;
   z-index: 10;
@@ -468,6 +484,7 @@ footer {
   text-transform: uppercase;
 }
 
+/* ── ANIMATIONS ── */
 @keyframes card-in {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -494,6 +511,43 @@ footer {
   main { padding: 1.25rem 1rem 2rem; }
   .logo-main { font-size: 20px; }
   .user-card { width: 100%; }
+}
+
+/* ── AUTOCOMPLETE DROPDOWN ── */
+.card-input-wrap { position: relative; }
+.autocomplete-list {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0; right: 0;
+  background: #141820;
+  border: 0.5px solid rgba(200,169,110,0.3);
+  border-radius: 2px;
+  z-index: 20;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.autocomplete-item {
+  padding: 7px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  border-bottom: 0.5px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover, .autocomplete-item.active { background: rgba(200,169,110,0.1); color: var(--gold); }
+.autocomplete-name { font-weight: 500; }
+.autocomplete-code { color: var(--text-dim); font-size: 11px; }
+.autocomplete-platform {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 </style>
 </head>
@@ -539,7 +593,7 @@ footer {
 </footer>
 
 <script>
-const API_KEY = 'aafbfe622fe94596afc436493cea8a60';
+const API_KEY = 'YOUR_API_KEY_HERE';
 const BASE = 'https://www.bungie.net';
 const headers = { 'X-API-Key': API_KEY };
 const STORAGE_KEY = 'exotifier_cards';
@@ -574,6 +628,7 @@ let defsLoading = null;
 let cards = [];
 let cardId = 0;
 
+// ── PERSISTENCE ───────────────────────────────────────────────────
 function saveState() {
   try {
     const data = cards.map(c => ({ bungieName: c.bungieName }));
@@ -589,6 +644,7 @@ function loadSavedState() {
   } catch(e) { return null; }
 }
 
+// ── MANIFEST / DEFS ──────────────────────────────────────────────
 async function loadDefs() {
   if (defsLoading) return defsLoading;
   defsLoading = (async () => {
@@ -607,6 +663,7 @@ async function loadDefs() {
 }
 loadDefs().catch(() => {});
 
+// ── CARD MANAGEMENT ──────────────────────────────────────────────
 function addCard(savedName) {
   const id = ++cardId;
   const state = {
@@ -631,6 +688,7 @@ function addCard(savedName) {
       if (el) el.focus();
     }, 50);
   } else {
+    // trigger lookup for restored name
     state.debounce = setTimeout(() => lookupUser(id, savedName.trim()), 300);
   }
 }
@@ -701,7 +759,10 @@ function cardHTML(state) {
           autocomplete="off"
           spellcheck="false"
           oninput="onNameInput(${state.id}, this.value)"
+          onblur="hideAutocomplete(${state.id})"
+          onkeydown="onInputKey(event, ${state.id})"
         />
+        <div class="autocomplete-list" id="autocomplete-${state.id}" style="display:none"></div>
         <div class="card-status" id="status-${state.id}"></div>
       </div>
 
@@ -721,6 +782,9 @@ function cardHTML(state) {
     </div>`;
 }
 
+// ── INPUT HANDLING ────────────────────────────────────────────────
+const PLATFORM_NAMES = { 1: 'Xbox', 2: 'PSN', 3: 'Steam', 6: 'Epic', 10: 'Demon', 254: 'Bungie' };
+
 function onNameInput(id, value) {
   const state = cards.find(c => c.id === id);
   if (!state) return;
@@ -735,12 +799,118 @@ function onNameInput(id, value) {
   setUsername(id, '—', 'Guardian');
   setEmblem(id, null, null);
   clearSlot(id);
+  hideAutocomplete(id);
   saveState();
   updateUI();
 
   const trimmed = value.trim();
-  if (!trimmed.includes('#') || trimmed.split('#')[1]?.length < 1) return;
-  state.debounce = setTimeout(() => lookupUser(id, trimmed), 500);
+  if (!trimmed) return;
+
+  if (trimmed.includes('#') && trimmed.split('#')[1]?.length >= 1) {
+    // Full BungieName#code — exact lookup after 500ms
+    state.debounce = setTimeout(() => lookupUser(id, trimmed), 500);
+  } else if (trimmed.length >= 3 && !trimmed.includes('#')) {
+    // Prefix search — show dropdown after 1s
+    state.debounce = setTimeout(() => searchPrefix(id, trimmed), 1000);
+  }
+}
+
+async function searchPrefix(id, prefix) {
+  const state = cards.find(c => c.id === id);
+  if (!state) return;
+  setStatus(id, 'loading', '<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
+  try {
+    // Bungie's prefix search endpoint
+    const r = await fetch(`${BASE}/Platform/Destiny2/SearchDestinyPlayer/-1/?displayName=${encodeURIComponent(prefix)}`, { headers });
+    const d = await r.json();
+    setStatus(id, '', '');
+    if (!d.Response?.length) { setStatus(id, 'err', 'No guardians found'); return; }
+
+    // Filter to unique bungieName#code combos, prefer cross-save
+    const seen = new Set();
+    const results = [];
+    for (const p of d.Response) {
+      const key = `${p.bungieGlobalDisplayName}#${p.bungieGlobalDisplayNameCode}`;
+      if (!seen.has(key) && p.bungieGlobalDisplayName) {
+        seen.add(key);
+        results.push(p);
+      }
+    }
+    showAutocomplete(id, results.slice(0, 8));
+  } catch(e) {
+    setStatus(id, 'err', 'Search error');
+  }
+}
+
+function showAutocomplete(id, results) {
+  const list = document.getElementById(`autocomplete-${id}`);
+  if (!list) return;
+  list.innerHTML = '';
+  if (!results.length) { list.style.display = 'none'; return; }
+
+  results.forEach((p, i) => {
+    const name = p.bungieGlobalDisplayName || p.displayName || '?';
+    const code = p.bungieGlobalDisplayNameCode || '';
+    const platform = PLATFORM_NAMES[p.membershipType] || '';
+    const full = code ? `${name}#${code}` : name;
+    const item = document.createElement('div');
+    item.className = 'autocomplete-item';
+    item.dataset.index = i;
+    item.innerHTML = `<span class="autocomplete-name">${name}</span><span class="autocomplete-code">#${code}</span><span class="autocomplete-platform">${platform}</span>`;
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault(); // prevent blur hiding list before click
+      selectAutocomplete(id, full);
+    });
+    list.appendChild(item);
+  });
+  list.style.display = 'block';
+}
+
+function hideAutocomplete(id) {
+  setTimeout(() => {
+    const list = document.getElementById(`autocomplete-${id}`);
+    if (list) list.style.display = 'none';
+  }, 150);
+}
+
+function selectAutocomplete(id, fullName) {
+  const state = cards.find(c => c.id === id);
+  if (!state) return;
+  const input = document.getElementById(`input-${id}`);
+  if (input) input.value = fullName;
+  state.bungieName = fullName;
+  hideAutocomplete(id);
+  saveState();
+  lookupUser(id, fullName);
+}
+
+// keyboard nav for autocomplete
+function onInputKey(e, id) {
+  const list = document.getElementById(`autocomplete-${id}`);
+  if (!list || list.style.display === 'none') return;
+  const items = list.querySelectorAll('.autocomplete-item');
+  const active = list.querySelector('.autocomplete-item.active');
+  let idx = active ? parseInt(active.dataset.index) : -1;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    idx = Math.min(idx + 1, items.length - 1);
+    items.forEach(el => el.classList.remove('active'));
+    items[idx]?.classList.add('active');
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    idx = Math.max(idx - 1, 0);
+    items.forEach(el => el.classList.remove('active'));
+    items[idx]?.classList.add('active');
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (active) {
+      const name = active.querySelector('.autocomplete-name').textContent;
+      const code = active.querySelector('.autocomplete-code').textContent;
+      selectAutocomplete(id, name + code);
+    }
+  } else if (e.key === 'Escape') {
+    hideAutocomplete(id);
+  }
 }
 
 async function lookupUser(id, name) {
@@ -785,6 +955,7 @@ async function loadProfile(id) {
       || resp.profile?.data?.userInfo?.displayName
       || state.bungieName.split('#')[0];
 
+    // most recent character
     const chars = resp.characters?.data || {};
     let latestChar = null, latestTime = '';
     for (const c of Object.values(chars)) {
@@ -839,6 +1010,7 @@ async function loadProfile(id) {
   }
 }
 
+// ── RANDOMIZE ─────────────────────────────────────────────────────
 async function randomizeAll() {
   const btn = document.getElementById('randomizeBtn');
   btn.disabled = true;
@@ -889,12 +1061,12 @@ function rollSlot(id, exotics, delay) {
           nameEl.textContent = pick.name;
         }
 
+        // Weapon type line — always grey-white regardless of damage type
         if (wtypeEl) {
-          const dmg = DAMAGE_TYPES[pick.damageTypeHash];
-          const isKinetic = !dmg || dmg.cls === 'dmg-kinetic';
-          wtypeEl.innerHTML = `<span class="${isKinetic ? 'dmg-kinetic' : dmg.cls}">${pick.type}</span>`;
+          wtypeEl.innerHTML = `<span class="wtype-label">${pick.type}</span>`;
         }
 
+        // Damage + ammo line
         if (dammoEl) {
           const dmg  = DAMAGE_TYPES[pick.damageTypeHash];
           const ammo = AMMO_TYPES[pick.ammoType];
@@ -913,6 +1085,7 @@ function rollSlot(id, exotics, delay) {
   });
 }
 
+// ── DOM HELPERS ───────────────────────────────────────────────────
 function setStatus(id, type, html) {
   const el = document.getElementById(`status-${id}`);
   if (!el) return;
@@ -954,6 +1127,7 @@ function clearSlot(id) {
   document.getElementById(`card-${id}`)?.classList.remove('ready', 'error-state');
 }
 
+// ── INIT ──────────────────────────────────────────────────────────
 (function init() {
   const saved = loadSavedState();
   if (saved && saved.length > 0) {
