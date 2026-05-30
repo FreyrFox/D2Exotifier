@@ -622,8 +622,6 @@ const AMMO_TYPES = {
   3: { label: 'III', cls: 'ammo-heavy'   },
 };
 
-let collectibleDefs = null;
-let itemDefs = null;
 let defsLoading = null;
 let cards = [];
 let cardId = 0;
@@ -645,19 +643,67 @@ function loadSavedState() {
 }
 
 // ── MANIFEST / DEFS ──────────────────────────────────────────────
+// We only cache the small filtered exotic weapon list, not the full definition tables.
+// Full tables are ~20MB combined; the filtered exotic list is <100KB.
+const EXOTIC_CACHE_KEY = 'exotifier_exotics';
+const EXOTIC_VERSION_KEY = 'exotifier_exotics_version';
+
+// exoticWeaponPool: array of { hash, name, type, icon, damageTypeHash, ammoType }
+// used by loadProfile to cross-reference against a user's collectibles
+let exoticWeaponPool = null;
+
 async function loadDefs() {
   if (defsLoading) return defsLoading;
   defsLoading = (async () => {
+    // Fetch manifest metadata — always needed, very small (~2KB)
     const r = await fetch(`${BASE}/Platform/Destiny2/Manifest/`, { headers });
     const d = await r.json();
     if (d.ErrorCode && d.ErrorCode !== 1) throw new Error(d.Message);
+    const version = d.Response.version;
     const paths = d.Response.jsonWorldComponentContentPaths.en;
+
+    // Check if our cached exotic pool matches the current manifest version
+    try {
+      const cachedVersion = localStorage.getItem(EXOTIC_VERSION_KEY);
+      if (cachedVersion === version) {
+        const raw = localStorage.getItem(EXOTIC_CACHE_KEY);
+        if (raw) {
+          exoticWeaponPool = JSON.parse(raw);
+          return; // cache hit — done, no big fetches needed
+        }
+      }
+    } catch(e) {}
+
+    // Cache miss — fetch both tables, filter down to just exotic weapons, cache the result
     const [cR, iR] = await Promise.all([
       fetch(BASE + paths.DestinyCollectibleDefinition),
       fetch(BASE + paths.DestinyInventoryItemDefinition)
     ]);
-    collectibleDefs = await cR.json();
-    itemDefs = await iR.json();
+    const collectibleDefs = await cR.json();
+    const itemDefs = await iR.json();
+
+    const pool = [];
+    for (const [hash, cDef] of Object.entries(collectibleDefs)) {
+      const iDef = itemDefs[cDef.itemHash];
+      if (!iDef) continue;
+      if (iDef.inventory?.tierTypeHash !== EXOTIC_TIER_HASH) continue;
+      const type = iDef.itemTypeDisplayName || '';
+      if (!WEAPON_TYPES.has(type)) continue;
+      pool.push({
+        hash,
+        name: iDef.displayProperties?.name || 'Unknown',
+        type,
+        icon: iDef.displayProperties?.icon || null,
+        damageTypeHash: iDef.defaultDamageTypeHash || null,
+        ammoType: iDef.equippingBlock?.ammoType || null,
+      });
+    }
+
+    exoticWeaponPool = pool;
+    try {
+      localStorage.setItem(EXOTIC_VERSION_KEY, version);
+      localStorage.setItem(EXOTIC_CACHE_KEY, JSON.stringify(pool));
+    } catch(e) {}
   })();
   return defsLoading;
 }
@@ -821,16 +867,17 @@ async function searchPrefix(id, prefix) {
   setStatus(id, 'loading', '<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
   try {
     // Current Bungie prefix search: User.SearchByGlobalNamePost
+    const searchBody = { displayNamePrefix: prefix };
     const r = await fetch(`${BASE}/Platform/User/Search/GlobalName/0/`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ displayNamePrefix: prefix })
+      body: JSON.stringify(searchBody)
     });
     const d = await r.json();
     setStatus(id, '', '');
 
     if (!d.Response?.searchResults?.length) {
-      setStatus(id, 'err', 'No guardians found');
+      setStatus(id, 'err', `No results (ErrorCode: ${d.ErrorCode}, Msg: ${d.Message})`);
       return;
     }
 
@@ -958,10 +1005,11 @@ async function lookupUser(id, name) {
     // Preserve leading zeros — Bungie codes are 4-digit strings, parseInt('0371') = 371 which fails
     const displayNameCode = parseInt(codeStr, 10);
 
+    const body = { displayName, displayNameCode };
     const r = await fetch(`${BASE}/Platform/Destiny2/SearchDestinyPlayerByBungieName/-1/`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ displayName, displayNameCode })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
 
@@ -1019,17 +1067,9 @@ async function loadProfile(id) {
 
     if (latestChar) {
       state.className = CLASS_NAMES[latestChar.classType] || 'Guardian';
-      const emblemHash = latestChar.emblemHash;
-      if (emblemHash && itemDefs) {
-        const emblemDef = itemDefs[emblemHash];
-        if (emblemDef) {
-          state.emblemBg = emblemDef.secondarySpecial ? BASE + emblemDef.secondarySpecial
-            : emblemDef.screenshot ? BASE + emblemDef.screenshot : null;
-          state.emblemIcon = emblemDef.displayProperties?.icon ? BASE + emblemDef.displayProperties.icon : null;
-        }
-      }
-      if (!state.emblemBg && latestChar.emblemBackgroundPath) state.emblemBg = BASE + latestChar.emblemBackgroundPath;
-      if (!state.emblemIcon && latestChar.emblemPath) state.emblemIcon = BASE + latestChar.emblemPath;
+      // emblemBackgroundPath and emblemPath are always present on the character object
+      if (latestChar.emblemBackgroundPath) state.emblemBg = BASE + latestChar.emblemBackgroundPath;
+      if (latestChar.emblemPath) state.emblemIcon = BASE + latestChar.emblemPath;
     }
 
     setUsername(id, state.username, state.className || 'Guardian');
@@ -1037,20 +1077,15 @@ async function loadProfile(id) {
 
     const collectibles = resp.profileCollectibles?.data?.collectibles || {};
     const exotics = [];
-    for (const [hash, cDef] of Object.entries(collectibleDefs)) {
-      const iDef = itemDefs[cDef.itemHash];
-      if (!iDef) continue;
-      if (iDef.inventory?.tierTypeHash !== EXOTIC_TIER_HASH) continue;
-      const type = iDef.itemTypeDisplayName || '';
-      if (!WEAPON_TYPES.has(type)) continue;
-      const cState = collectibles[hash]?.state ?? null;
-      if (cState !== null && !!(cState & 1)) continue;
+    for (const weapon of exoticWeaponPool) {
+      const cState = collectibles[weapon.hash]?.state ?? null;
+      if (cState !== null && !!(cState & 1)) continue; // bit 0 = not acquired
       exotics.push({
-        name: iDef.displayProperties?.name || 'Unknown',
-        type,
-        icon: iDef.displayProperties?.icon ? BASE + iDef.displayProperties.icon : null,
-        damageTypeHash: iDef.defaultDamageTypeHash || null,
-        ammoType: iDef.equippingBlock?.ammoType || null
+        name: weapon.name,
+        type: weapon.type,
+        icon: weapon.icon ? BASE + weapon.icon : null,
+        damageTypeHash: weapon.damageTypeHash,
+        ammoType: weapon.ammoType,
       });
     }
 
@@ -1125,7 +1160,7 @@ function rollSlot(id, exotics, delay) {
         if (dammoEl) {
           const dmg  = DAMAGE_TYPES[pick.damageTypeHash];
           const ammo = AMMO_TYPES[pick.ammoType];
-          const dmgHtml  = (dmg && dmg.cls !== 'dmg-sporgle') ? `<span class="${dmg.cls}">${dmg.label}</span>` : '';
+          const dmgHtml  = (dmg && dmg.cls !== 'dmg-scrungle') ? `<span class="${dmg.cls}">${dmg.label}</span>` : '';
           const ammoHtml = ammo ? `<span class="${ammo.cls}">${ammo.label}</span>` : '';
           dammoEl.innerHTML = dmgHtml + ammoHtml;
           dammoEl.style.display = (dmgHtml || ammoHtml) ? 'flex' : 'none';
