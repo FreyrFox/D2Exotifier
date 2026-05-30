@@ -820,25 +820,46 @@ async function searchPrefix(id, prefix) {
   if (!state) return;
   setStatus(id, 'loading', '<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
   try {
-    // Bungie's prefix search endpoint
-    const r = await fetch(`${BASE}/Platform/Destiny2/SearchDestinyPlayer/-1/?displayName=${encodeURIComponent(prefix)}`, { headers });
+    // Current Bungie prefix search: User.SearchByGlobalNamePost
+    const r = await fetch(`${BASE}/Platform/User/Search/GlobalName/0/`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayNamePrefix: prefix })
+    });
     const d = await r.json();
     setStatus(id, '', '');
-    if (!d.Response?.length) { setStatus(id, 'err', 'No guardians found'); return; }
 
-    // Filter to unique bungieName#code combos, prefer cross-save
+    if (!d.Response?.searchResults?.length) {
+      setStatus(id, 'err', 'No guardians found');
+      return;
+    }
+
+    // Each searchResult has bungieGlobalDisplayName, bungieGlobalDisplayNameCode,
+    // and destinyMemberships[] array
     const seen = new Set();
     const results = [];
-    for (const p of d.Response) {
-      const key = `${p.bungieGlobalDisplayName}#${p.bungieGlobalDisplayNameCode}`;
-      if (!seen.has(key) && p.bungieGlobalDisplayName) {
+    for (const result of d.Response.searchResults) {
+      const name = result.bungieGlobalDisplayName;
+      const code = String(result.bungieGlobalDisplayNameCode).padStart(4, '0');
+      const key = `${name}#${code}`;
+      if (!seen.has(key) && name) {
         seen.add(key);
-        results.push(p);
+        // Find the best destiny membership (prefer cross-save primary)
+        const memberships = result.destinyMemberships || [];
+        const best = memberships.find(m => m.crossSaveOverride === m.membershipType)
+                  || memberships.find(m => m.crossSaveOverride === 0)
+                  || memberships[0];
+        results.push({
+          bungieGlobalDisplayName: name,
+          bungieGlobalDisplayNameCode: code,
+          membershipType: best?.membershipType,
+          membershipId: best?.membershipId,
+        });
       }
     }
     showAutocomplete(id, results.slice(0, 8));
   } catch(e) {
-    setStatus(id, 'err', 'Search error');
+    setStatus(id, 'err', 'Search error: ' + e.message);
   }
 }
 
@@ -849,17 +870,21 @@ function showAutocomplete(id, results) {
   if (!results.length) { list.style.display = 'none'; return; }
 
   results.forEach((p, i) => {
-    const name = p.bungieGlobalDisplayName || p.displayName || '?';
-    const code = p.bungieGlobalDisplayNameCode || '';
+    const name = p.bungieGlobalDisplayName || '?';
+    const code = String(p.bungieGlobalDisplayNameCode || '').padStart(4, '0');
     const platform = PLATFORM_NAMES[p.membershipType] || '';
-    const full = code ? `${name}#${code}` : name;
+    const full = `${name}#${code}`;
     const item = document.createElement('div');
     item.className = 'autocomplete-item';
     item.dataset.index = i;
+    item.dataset.full = full;
+    // Store resolved IDs so we can skip the second lookup
+    if (p.membershipId) item.dataset.membershipId = p.membershipId;
+    if (p.membershipType) item.dataset.membershipType = p.membershipType;
     item.innerHTML = `<span class="autocomplete-name">${name}</span><span class="autocomplete-code">#${code}</span><span class="autocomplete-platform">${platform}</span>`;
     item.addEventListener('mousedown', (e) => {
-      e.preventDefault(); // prevent blur hiding list before click
-      selectAutocomplete(id, full);
+      e.preventDefault();
+      selectAutocomplete(id, item);
     });
     list.appendChild(item);
   });
@@ -873,15 +898,26 @@ function hideAutocomplete(id) {
   }, 150);
 }
 
-function selectAutocomplete(id, fullName) {
+function selectAutocomplete(id, itemEl) {
   const state = cards.find(c => c.id === id);
   if (!state) return;
+  const fullName = itemEl.dataset.full;
+  const membershipId = itemEl.dataset.membershipId;
+  const membershipType = itemEl.dataset.membershipType;
   const input = document.getElementById(`input-${id}`);
   if (input) input.value = fullName;
   state.bungieName = fullName;
   hideAutocomplete(id);
   saveState();
-  lookupUser(id, fullName);
+  // If we already have resolved IDs from the search, skip straight to loadProfile
+  if (membershipId && membershipType) {
+    state.membershipId = membershipId;
+    state.membershipType = parseInt(membershipType, 10);
+    setStatus(id, 'loading', 'Loading profile<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
+    loadProfile(id);
+  } else {
+    lookupUser(id, fullName);
+  }
 }
 
 // keyboard nav for autocomplete
@@ -904,9 +940,7 @@ function onInputKey(e, id) {
   } else if (e.key === 'Enter') {
     e.preventDefault();
     if (active) {
-      const name = active.querySelector('.autocomplete-name').textContent;
-      const code = active.querySelector('.autocomplete-code').textContent;
-      selectAutocomplete(id, name + code);
+      selectAutocomplete(id, active);
     }
   } else if (e.key === 'Escape') {
     hideAutocomplete(id);
@@ -918,17 +952,38 @@ async function lookupUser(id, name) {
   if (!state) return;
   setStatus(id, 'loading', '<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
   try {
-    const [displayName, code] = name.split('#');
+    const parts = name.split('#');
+    const displayName = parts[0];
+    const codeStr = parts[1] || '';
+    // Preserve leading zeros — Bungie codes are 4-digit strings, parseInt('0371') = 371 which fails
+    const displayNameCode = parseInt(codeStr, 10);
+
     const r = await fetch(`${BASE}/Platform/Destiny2/SearchDestinyPlayerByBungieName/-1/`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ displayName, displayNameCode: parseInt(code) })
+      body: JSON.stringify({ displayName, displayNameCode })
     });
     const d = await r.json();
-    if (!d.Response?.length) { setStatus(id, 'err', 'Guardian not found'); return; }
-    const p = d.Response[0];
-    state.membershipId = p.membershipId;
-    state.membershipType = p.membershipType;
+
+    // API may return players on multiple platforms — prefer cross-save primary, else first result
+    let player = null;
+    if (d.Response?.length) {
+      // crossSaveOverride === membershipType means this is the primary cross-save account
+      player = d.Response.find(p => p.crossSaveOverride === p.membershipType)
+             || d.Response.find(p => p.crossSaveOverride === 0)
+             || d.Response[0];
+    }
+
+    if (!player) { setStatus(id, 'err', 'Guardian not found'); return; }
+
+    // If cross-save is active, use the override membership for profile lookup
+    if (player.crossSaveOverride && player.crossSaveOverride !== player.membershipType) {
+      const override = d.Response.find(p => p.membershipType === player.crossSaveOverride);
+      if (override) player = override;
+    }
+
+    state.membershipId = player.membershipId;
+    state.membershipType = player.membershipType;
     setStatus(id, 'loading', 'Loading profile<span class="dot">·</span><span class="dot">·</span><span class="dot">·</span>');
     await loadProfile(id);
   } catch(e) {
